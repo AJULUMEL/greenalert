@@ -1,3 +1,0 @@
-# GreenAlert Dashboard - Complete Documentation
-
-... (content archived) ...

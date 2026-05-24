@@ -1,3 +1,0 @@
-# Greenfields System Design
-
-... (content archived) ...

@@ -1,3 +1,0 @@
-# Enterprise Architecture Refactoring - Implementation Guide
-
-... (content archived) ...
