@@ -1,0 +1,103 @@
+version: '3.8'
+
+services:
+  # PHP-FPM Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: greenalert-app
+    restart: unless-stopped
+    working_dir: /var/www/greenalert
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=${DB_DATABASE:-greenalert}
+      - DB_USERNAME=${DB_USERNAME:-greenalert_user}
+      - DB_PASSWORD=${DB_PASSWORD:-greenalert_pass}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      - ./:/var/www/greenalert
+      - ./storage:/var/www/greenalert/storage
+    ports:
+      - "9000:9000"
+    networks:
+      - greenalert-network
+    depends_on:
+      - db
+      - redis
+    healthcheck:
+      test: ["CMD", "php-fpm-healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MySQL Database
+  db:
+    image: mysql:8.0
+    container_name: greenalert-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-greenalert}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_pass}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-greenalert_pass}
+      MYSQL_USER: ${DB_USERNAME:-greenalert_user}
+    volumes:
+      - dbdata:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - greenalert-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Nginx Web Server
+  nginx:
+    image: nginx:alpine
+    container_name: greenalert-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./:/var/www/greenalert
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+      - ./docker/nginx/ssl:/etc/nginx/ssl
+    networks:
+      - greenalert-network
+    depends_on:
+      - app
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: greenalert-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - greenalert-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  dbdata:
+    driver: local
+
+networks:
+  greenalert-network:
+    driver: bridge

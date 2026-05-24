@@ -1,0 +1,3 @@
+# Testing Guide for Enterprise Architecture
+
+... (content archived) ...

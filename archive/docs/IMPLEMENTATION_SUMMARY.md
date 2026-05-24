@@ -1,0 +1,3 @@
+# GreenAlert Implementation Summary
+
+... (content archived) ...

@@ -1,0 +1,3 @@
+# GreenAlert Deployment Guide
+
+... (content archived) ...
